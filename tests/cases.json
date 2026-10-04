@@ -1,35 +1,124 @@
 {
   "_comment": "python/auto_ver4.py 와 assets/analysis.js 가 똑같이 통과해야 하는 공통 케이스. 규칙을 바꾸면 여기부터 고친다.",
   "file_names": [
-    { "name": "260819_홍원기_놀 눈 1 무.csv", "expect": { "expr": "놀", "part": "눈", "attempt": 1, "neutral": true } },
-    { "name": "260819_홍원기_놀 눈 1.csv", "expect": { "expr": "놀", "part": "눈", "attempt": 1, "neutral": false } },
-    { "name": "260819_홍원기_웃 입 42 무.csv", "expect": { "expr": "웃", "part": "입", "attempt": 42, "neutral": true } },
-    { "name": "화 볼 7.CSV", "expect": { "expr": "화", "part": "볼", "attempt": 7, "neutral": false } },
-    { "name": "놀눈3무.csv", "expect": { "expr": "놀", "part": "눈", "attempt": 3, "neutral": true } },
-    { "name": "260819_홍원기_놀 코 1.csv", "expect": null },
-    { "name": "260819_홍원기_놀 눈.csv", "expect": null },
-    { "name": "notes.txt", "expect": null }
+    {
+      "name": "260819_홍원기_놀 눈 1 무.csv",
+      "expect": {
+        "expr": "놀",
+        "part": "눈",
+        "attempt": 1,
+        "neutral": true
+      }
+    },
+    {
+      "name": "260819_홍원기_놀 눈 1.csv",
+      "expect": {
+        "expr": "놀",
+        "part": "눈",
+        "attempt": 1,
+        "neutral": false
+      }
+    },
+    {
+      "name": "260819_홍원기_웃 입 42 무.csv",
+      "expect": {
+        "expr": "웃",
+        "part": "입",
+        "attempt": 42,
+        "neutral": true
+      }
+    },
+    {
+      "name": "화 볼 7.CSV",
+      "expect": {
+        "expr": "화",
+        "part": "볼",
+        "attempt": 7,
+        "neutral": false
+      }
+    },
+    {
+      "name": "놀눈3무.csv",
+      "expect": {
+        "expr": "놀",
+        "part": "눈",
+        "attempt": 3,
+        "neutral": true
+      }
+    },
+    {
+      "name": "260819_홍원기_놀 코 1.csv",
+      "expect": null
+    },
+    {
+      "name": "260819_홍원기_놀 눈.csv",
+      "expect": null
+    },
+    {
+      "name": "notes.txt",
+      "expect": null
+    }
   ],
   "pair_checks": [
-    { "a": "x_놀 눈 1 무.csv", "b": "x_놀 눈 1.csv", "ok": true, "neutral": 0 },
-    { "a": "x_놀 눈 1.csv", "b": "x_놀 눈 1 무.csv", "ok": true, "neutral": 1 },
-    { "a": "x_놀 눈 1 무.csv", "b": "x_놀 눈 1 무.csv", "ok": false },
-    { "a": "x_놀 눈 1.csv", "b": "x_놀 눈 1.csv", "ok": false },
-    { "a": "x_놀 눈 1 무.csv", "b": "x_화 눈 1.csv", "ok": false },
-    { "a": "x_놀 눈 1 무.csv", "b": "x_놀 입 1.csv", "ok": false },
-    { "a": "x_놀 눈 1 무.csv", "b": "x_놀 눈 2.csv", "ok": false },
-    { "a": "x_놀 눈 1 무.csv", "b": "data.csv", "ok": false }
+    {
+      "a": "x_놀 눈 1 무.csv",
+      "b": "x_놀 눈 1.csv",
+      "ok": true,
+      "neutral": 0
+    },
+    {
+      "a": "x_놀 눈 1.csv",
+      "b": "x_놀 눈 1 무.csv",
+      "ok": true,
+      "neutral": 1
+    },
+    {
+      "a": "x_놀 눈 1 무.csv",
+      "b": "x_놀 눈 1 무.csv",
+      "ok": false
+    },
+    {
+      "a": "x_놀 눈 1.csv",
+      "b": "x_놀 눈 1.csv",
+      "ok": false
+    },
+    {
+      "a": "x_놀 눈 1 무.csv",
+      "b": "x_화 눈 1.csv",
+      "ok": false
+    },
+    {
+      "a": "x_놀 눈 1 무.csv",
+      "b": "x_놀 입 1.csv",
+      "ok": false
+    },
+    {
+      "a": "x_놀 눈 1 무.csv",
+      "b": "x_놀 눈 2.csv",
+      "ok": false
+    },
+    {
+      "a": "x_놀 눈 1 무.csv",
+      "b": "data.csv",
+      "ok": false
+    }
   ],
   "csv_peaks": [
     {
       "_comment": "헤더는 건너뛰고 B열 최저값의 행을 고른다",
       "text": "Frequency(Hz),Return Loss(dB),Phase(deg)\n1000,-2.5,1\n2000,-9.75,1\n3000,-4,1\n",
-      "expect": { "hz": 2000, "db": -9.75 }
+      "expect": {
+        "hz": 2000,
+        "db": -9.75
+      }
     },
     {
       "_comment": "최저값 동률이면 먼저 나온 행, 빈 칸·숫자 아닌 행은 무시, BOM 허용",
       "text": "﻿Frequency(Hz),Return Loss(dB)\n1000,-3\n,-99\nabc,-50\n2000,-7\n3000,-7\n4000,\n",
-      "expect": { "hz": 2000, "db": -7 }
+      "expect": {
+        "hz": 2000,
+        "db": -7
+      }
     },
     {
       "text": "Frequency(Hz),Return Loss(dB)\n",
@@ -38,16 +127,123 @@
   ],
   "pairing": {
     "names": [
-      "a_놀 눈 2 무.csv", "a_놀 눈 2.csv", "a_놀 눈 1 무.csv", "a_놀 눈 1.csv",
-      "a_웃 입 42 무.csv", "a_화 볼 1.csv", "readme.csv"
+      "a_놀 눈 2 무.csv",
+      "a_놀 눈 2.csv",
+      "a_놀 눈 1 무.csv",
+      "a_놀 눈 1.csv",
+      "a_웃 입 42 무.csv",
+      "a_화 볼 1.csv",
+      "readme.csv"
     ],
-    "expect_pairs": [["놀", "눈", 1], ["놀", "눈", 2]],
-    "expect_unpaired": ["a_웃 입 42 무.csv", "a_화 볼 1.csv"],
-    "expect_unrecognized": ["readme.csv"]
+    "expect_pairs": [
+      [
+        "놀",
+        "눈",
+        1
+      ],
+      [
+        "놀",
+        "눈",
+        2
+      ]
+    ],
+    "expect_unpaired": [
+      "a_웃 입 42 무.csv",
+      "a_화 볼 1.csv"
+    ],
+    "expect_unrecognized": [
+      "readme.csv"
+    ]
   },
   "stats": {
-    "values": [1, 2, 3, 4],
+    "values": [
+      1,
+      2,
+      3,
+      4
+    ],
     "mean": 2.5,
     "stdev": 1.2909944487358056
+  },
+  "attempt_matrix": {
+    "_comment": "비교군 × attempt 표. 짝 없는 파일의 attempt 도 행으로 나오고, attempts 는 전체 합집합",
+    "results": [
+      {
+        "expr": "웃",
+        "part": "입",
+        "attempt": 2
+      },
+      {
+        "expr": "놀",
+        "part": "눈",
+        "attempt": 3
+      },
+      {
+        "expr": "놀",
+        "part": "눈",
+        "attempt": 1
+      },
+      {
+        "expr": "웃",
+        "part": "입",
+        "attempt": 1
+      }
+    ],
+    "unpaired": [
+      "a_웃 입 42 무.csv",
+      "a_놀 눈 1 무.csv",
+      "a_화 볼 5.csv"
+    ],
+    "expect_attempts": [
+      1,
+      2,
+      3,
+      5,
+      42
+    ],
+    "expect_groups": [
+      [
+        "놀",
+        "눈",
+        [
+          [
+            1,
+            "pair"
+          ],
+          [
+            3,
+            "pair"
+          ]
+        ]
+      ],
+      [
+        "화",
+        "볼",
+        [
+          [
+            5,
+            "unpaired"
+          ]
+        ]
+      ],
+      [
+        "웃",
+        "입",
+        [
+          [
+            1,
+            "pair"
+          ],
+          [
+            2,
+            "pair"
+          ],
+          [
+            42,
+            "unpaired"
+          ]
+        ]
+      ]
+    ]
   }
 }

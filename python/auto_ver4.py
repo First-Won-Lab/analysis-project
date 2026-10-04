@@ -10,6 +10,8 @@ auto_ver3.py 의 피크 추출 로직(B열 Return Loss 최저값 + 해당 행 A�
 
 비교값: |Δf| = |f_원 - f_무| ,  |ΔdB| = |dB_원 - dB_무|  (절대값)
 
+저장 CSV: 쌍별 / 표정·부위별 통계 / attempt별(비교군 × attempt 표) / 제외파일
+
 사용법:
     python auto_ver4.py                    # 폴더 선택 창
     python auto_ver4.py <폴더> [-o <출력폴더>]
@@ -169,6 +171,51 @@ def group_stats(results):
     return stats
 
 
+def attempt_matrix(results, unpaired):
+    """비교군(표정·부위) × attempt 표. assets/analysis.js 의 attemptMatrix 와 같은 구조.
+    반환: (attempts, groups)
+        attempts: 전체 비교군의 attempt 합집합 (정렬)
+        groups: [{'expr', 'part', 'rows': [{'attempt', 'result' | None, 'unpaired' | None}]}]"""
+    all_attempts = set()
+    groups = []
+    for expr in EXPRESSIONS:
+        for part in PARTS:
+            by_attempt = {}
+            for r in results:
+                if r['expr'] == expr and r['part'] == part:
+                    by_attempt[r['attempt']] = {'attempt': r['attempt'], 'result': r, 'unpaired': None}
+            for name in unpaired:
+                info = parse_file_name(name)
+                if info and info['expr'] == expr and info['part'] == part and info['attempt'] not in by_attempt:
+                    by_attempt[info['attempt']] = {'attempt': info['attempt'], 'result': None, 'unpaired': name}
+            if not by_attempt:
+                continue
+            rows = [by_attempt[k] for k in sorted(by_attempt)]
+            all_attempts.update(by_attempt)
+            groups.append({'expr': expr, 'part': part, 'rows': rows})
+    return sorted(all_attempts), groups
+
+
+def attempt_matrix_rows(attempts, groups):
+    """attempt 표를 CSV 행으로. 비교군마다 |Δf|(Hz), |ΔdB| 두 줄. 짝 없는 attempt 는 '짝 없음'."""
+    rows = [['표정', '부위', '항목'] + [str(a) for a in attempts]]
+    for g in groups:
+        cells = {row['attempt']: row for row in g['rows']}
+        for label, key in [('|Δf|(Hz)', 'abs_delta_hz'), ('|ΔdB|', 'abs_delta_db')]:
+            line = [g['expr'], g['part'], label]
+            for a in attempts:
+                row = cells.get(a)
+                if row is None:
+                    line.append('')
+                elif row['result'] is None:
+                    line.append('짝 없음')
+                else:
+                    value = row['result'][key]
+                    line.append(round(value, 6) if key == 'abs_delta_db' else value)
+            rows.append(line)
+    return rows
+
+
 # ==========================================
 # 출력
 # ==========================================
@@ -213,7 +260,7 @@ def print_report(results, stats, unrecognized, unpaired, duplicates, failed):
             print(f"[중복 파일명]  {len(duplicates)}개는 같은 이름의 파일이 이미 있어 건너뜀")
 
 
-def save_csv(results, stats, excluded, out_dir):
+def save_csv(results, stats, excluded, matrix_rows, out_dir):
     os.makedirs(out_dir, exist_ok=True)
     stamp = datetime.now().strftime('%Y%m%d_%H%M%S')
 
@@ -238,6 +285,10 @@ def save_csv(results, stats, excluded, out_dir):
                         '' if s['hz_sd'] is None else s['hz_sd'],
                         s['db_mean'], '' if s['db_sd'] is None else s['db_sd']])
 
+    matrix_path = os.path.join(out_dir, f'비교결과_attempt별_{stamp}.csv')
+    with open(matrix_path, 'w', newline='', encoding='utf-8-sig') as f:
+        csv.writer(f).writerows(matrix_rows)
+
     excluded_path = None
     if excluded:
         excluded_path = os.path.join(out_dir, f'비교결과_제외파일_{stamp}.csv')
@@ -246,7 +297,7 @@ def save_csv(results, stats, excluded, out_dir):
             w.writerow(['사유', '파일명'])
             w.writerows(excluded)
 
-    return pairs_path, stats_path, excluded_path
+    return pairs_path, stats_path, matrix_path, excluded_path
 
 
 def choose_folder():
@@ -301,7 +352,8 @@ def main(argv=None):
     excluded = ([('짝 없음', n) for n in unpaired]
                 + [('파일명 규칙 불일치', n) for n in unrecognized]
                 + [('데이터 추출 실패', n) for n in failed])
-    paths = save_csv(results, stats, excluded, out_dir)
+    matrix_rows = attempt_matrix_rows(*attempt_matrix(results, unpaired))
+    paths = save_csv(results, stats, excluded, matrix_rows, out_dir)
     print("\n💾 결과 저장:")
     for p in paths:
         if p:

@@ -167,8 +167,39 @@
     return stats;
   }
 
+  /**
+   * 비교군(표정·부위) × attempt 표.
+   * results: 쌍별 결과, unpaired: 짝 없는 파일명 목록
+   * 반환: { attempts: number[] (전체 비교군의 attempt 합집합),
+   *         groups: [{ expr, part, rows: [{ attempt, result | null, unpaired: 파일명 | null }] }] }
+   * 각 비교군의 rows 는 그 비교군에 쌍이나 짝 없는 파일이 있는 attempt 만 담는다.
+   */
+  function attemptMatrix(results, unpaired) {
+    const all = new Set();
+    const groups = [];
+    for (const expr of EXPRESSIONS) {
+      for (const part of PARTS) {
+        const byAttempt = new Map();
+        for (const r of results) {
+          if (r.expr === expr && r.part === part) byAttempt.set(r.attempt, { attempt: r.attempt, result: r, unpaired: null });
+        }
+        for (const name of unpaired || []) {
+          const info = parseFileName(name);
+          if (info && info.expr === expr && info.part === part && !byAttempt.has(info.attempt)) {
+            byAttempt.set(info.attempt, { attempt: info.attempt, result: null, unpaired: name });
+          }
+        }
+        if (!byAttempt.size) continue;
+        const rows = [...byAttempt.values()].sort((a, b) => a.attempt - b.attempt);
+        rows.forEach((row) => all.add(row.attempt));
+        groups.push({ expr, part, rows });
+      }
+    }
+    return { attempts: [...all].sort((a, b) => a - b), groups };
+  }
+
   return {
     EXPRESSIONS, PARTS, EXPRESSION_NAMES, PART_NAMES,
-    parseCsv, parseFileName, label, checkPair, comparePeaks, buildPairs, groupStats, mean, stdev,
+    parseCsv, parseFileName, label, checkPair, comparePeaks, buildPairs, groupStats, attemptMatrix, mean, stdev,
   };
 });

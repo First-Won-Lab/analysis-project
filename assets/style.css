@@ -149,6 +149,19 @@ table.clickable tbody tr { cursor: pointer; }
 table.clickable tbody tr:hover, table.clickable tbody tr.selected { background: var(--hover); }
 td.file { white-space: normal; word-break: break-all; color: var(--text-secondary); font-size: 13px; }
 
+.group-tabs { display: flex; flex-wrap: wrap; gap: 6px; }
+.group-tab {
+  font: inherit; font-size: 13px; color: var(--text-secondary); background: var(--surface-1);
+  border: 1px solid var(--border); border-radius: 999px; padding: 4px 12px; cursor: pointer;
+}
+.group-tab:hover { background: var(--hover); }
+.group-tab[aria-selected="true"] { color: var(--text-primary); border-color: var(--accent); box-shadow: inset 0 0 0 1px var(--accent); font-weight: 500; }
+.group-tab:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+#group-caption { margin-top: 8px; font-size: 13px; }
+table.data tfoot td { border-top: 1px solid var(--border); border-bottom: 0; font-weight: 500; }
+table.data tr.missing td { color: var(--text-muted); cursor: default; }
+table.clickable tbody tr.missing:hover { background: none; }
+
 .filters { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; font-size: 14px; }
 .filters select {
   font: inherit; color: var(--text-primary); background: var(--surface-1);

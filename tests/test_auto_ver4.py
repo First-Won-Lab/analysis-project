@@ -64,6 +64,23 @@ class PairingTest(unittest.TestCase):
         self.assertEqual(unrecognized, c['expect_unrecognized'])
 
 
+class AttemptMatrixTest(unittest.TestCase):
+    def test_matrix(self):
+        c = CASES['attempt_matrix']
+        attempts, groups = a.attempt_matrix(c['results'], c['unpaired'])
+        self.assertEqual(attempts, c['expect_attempts'])
+        got = [[g['expr'], g['part'], [[r['attempt'], 'pair' if r['result'] else 'unpaired'] for r in g['rows']]]
+               for g in groups]
+        self.assertEqual(got, c['expect_groups'])
+
+    def test_rows(self):
+        results = [{'expr': '놀', 'part': '눈', 'attempt': 1, 'abs_delta_hz': 3e6, 'abs_delta_db': 1.5}]
+        rows = a.attempt_matrix_rows(*a.attempt_matrix(results, ['x_놀 눈 2 무.csv']))
+        self.assertEqual(rows, [['표정', '부위', '항목', '1', '2'],
+                                ['놀', '눈', '|Δf|(Hz)', 3e6, '짝 없음'],
+                                ['놀', '눈', '|ΔdB|', 1.5, '짝 없음']])
+
+
 class StatsTest(unittest.TestCase):
     def test_describe(self):
         c = CASES['stats']

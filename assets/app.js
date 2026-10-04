@@ -251,7 +251,9 @@
       ...unrecognized.map((n) => ['파일명 규칙 불일치', n]),
       ...failed.map((n) => ['데이터 추출 실패', n]),
     ];
-    batch = { results, stats: A.groupStats(results), curves, excluded, duplicates, sortKey: null, sortDir: 1, selected: null };
+    const matrix = A.attemptMatrix(results, unpaired);
+    batch = { results, stats: A.groupStats(results), matrix, curves, excluded, duplicates, sortKey: null, sortDir: 1, selected: null,
+      group: matrix.groups.length ? groupKey(matrix.groups[0]) : null };
     renderBatch();
   }
 
@@ -277,10 +279,61 @@
     fillSelect($('f-expr'), A.EXPRESSIONS.filter((x) => results.some((r) => r.expr === x)), A.EXPRESSION_NAMES);
     fillSelect($('f-part'), A.PARTS.filter((x) => results.some((r) => r.part === x)), A.PART_NAMES);
 
+    renderGroupTabs();
+    renderAttemptTable();
     renderPairsTable();
     drawBatchCharts();
     $('batch-detail').hidden = true;
   }
+
+  // ---------- 비교군별 attempt 차이 ----------
+  const groupKey = (g) => `${g.expr}|${g.part}`;
+  const groupName = (g) => `${A.EXPRESSION_NAMES[g.expr]}·${A.PART_NAMES[g.part]}`;
+
+  function renderGroupTabs() {
+    $('group-tabs').innerHTML = batch.matrix.groups.map((g) => {
+      const n = g.rows.filter((r) => r.result).length;
+      const on = groupKey(g) === batch.group;
+      return `<button class="group-tab" role="tab" data-group="${groupKey(g)}" aria-selected="${on}">${groupName(g)} <span class="muted">${n}</span></button>`;
+    }).join('');
+  }
+
+  function renderAttemptTable() {
+    const g = batch.matrix.groups.find((x) => groupKey(x) === batch.group);
+    if (!g) { $('attempt-body').innerHTML = ''; $('attempt-foot').innerHTML = ''; $('group-caption').textContent = ''; return; }
+    const paired = g.rows.filter((r) => r.result);
+    const missing = g.rows.length - paired.length;
+
+    $('attempt-body').innerHTML = g.rows.map((row) => {
+      if (!row.result) {
+        const role = A.parseFileName(row.unpaired).neutral ? '원상태' : '무표정';
+        return `<tr class="missing"><td class="num">${row.attempt}</td><td class="num">—</td><td class="num">—</td><td>짝 없음 (${role} 파일 없음: ${esc(row.unpaired)} 만 있음)</td></tr>`;
+      }
+      const r = row.result;
+      const id = `${r.expr}|${r.part}|${r.attempt}`;
+      return `<tr data-id="${id}" tabindex="0" class="${batch.selected === id ? 'selected' : ''}"><td class="num">${r.attempt}</td>
+        <td class="num">${fmtMHz(r.absDeltaHz)}</td><td class="num">${fmtDb(r.absDeltaDb)}</td><td></td></tr>`;
+    }).join('');
+    const hz = paired.map((row) => row.result.absDeltaHz);
+    const db = paired.map((row) => row.result.absDeltaDb);
+    $('group-caption').textContent = `${groupName(g)} — attempt ${g.rows.length}개 중 비교 ${paired.length}쌍` +
+      (missing ? ` · 짝 없음 ${missing}개` : '') +
+      (paired.length ? ` · 평균 |Δf| ${fmtMHz(A.mean(hz))} MHz (SD ${fmtOpt(A.stdev(hz), fmtMHz)}) · 평균 |ΔdB| ${fmtDb(A.mean(db))} (SD ${fmtOpt(A.stdev(db), fmtDb)})` : '') +
+      ' · 행을 누르면 아래에 두 곡선을 겹쳐 보여 줍니다.';
+    $('attempt-foot').innerHTML = paired.length ? `
+      <tr><td class="num">평균</td><td class="num">${fmtMHz(A.mean(hz))}</td><td class="num">${fmtDb(A.mean(db))}</td><td>n = ${paired.length}</td></tr>
+      <tr><td class="num">SD</td><td class="num">${fmtOpt(A.stdev(hz), fmtMHz)}</td><td class="num">${fmtOpt(A.stdev(db), fmtDb)}</td><td>표본표준편차</td></tr>` : '';
+  }
+
+  $('group-tabs').addEventListener('click', (e) => {
+    const b = e.target.closest('[data-group]');
+    if (!b) return;
+    batch.group = b.dataset.group;
+    renderGroupTabs();
+    renderAttemptTable();
+  });
+  $('attempt-body').addEventListener('click', (e) => { const tr = e.target.closest('tr[data-id]'); if (tr) showBatchDetail(tr.dataset.id); });
+  $('attempt-body').addEventListener('keydown', (e) => { if (e.key === 'Enter') { const tr = e.target.closest('tr[data-id]'); if (tr) showBatchDetail(tr.dataset.id); } });
 
   function drawBatchCharts() {
     if (!batch || !batch.stats.length) return;
@@ -320,7 +373,7 @@
     const r = batch.results.find((x) => `${x.expr}|${x.part}|${x.attempt}` === id);
     if (!r) return;
     batch.selected = id;
-    document.querySelectorAll('#pairs-table tr').forEach((tr) => tr.classList.toggle('selected', tr.dataset.id === id));
+    document.querySelectorAll('#pairs-table tr, #attempt-body tr').forEach((tr) => tr.classList.toggle('selected', tr.dataset.id === id));
     $('batch-detail').hidden = false;
     $('batch-detail-title').textContent = `${A.label(r)} — |Δf| ${fmtMHz(r.absDeltaHz)} MHz · |ΔdB| ${fmtDb(r.absDeltaDb)}`;
     drawCurves($('batch-chart'), batch.curves.get(r.neutral), batch.curves.get(r.expressive));
@@ -343,6 +396,23 @@
       ['표정', '부위', 'attempt', '무표정 파일', '원상태 파일', '무표정 주파수(Hz)', '무표정 피크(dB)', '원상태 주파수(Hz)', '원상태 피크(dB)', '|Δf|(Hz)', '|ΔdB|'],
       ...batch.results.map((r) => [r.expr, r.part, r.attempt, r.neutral, r.expressive, r.nHz, r.nDb, r.eHz, r.eDb, r.absDeltaHz, +r.absDeltaDb.toFixed(6)]),
     ]);
+  });
+  // python/auto_ver4.py 의 attempt_matrix_rows 와 같은 형식
+  $('dl-matrix').addEventListener('click', () => {
+    const { attempts, groups } = batch.matrix;
+    const rows = [['표정', '부위', '항목', ...attempts.map(String)]];
+    for (const g of groups) {
+      const cells = new Map(g.rows.map((row) => [row.attempt, row]));
+      for (const [label, key] of [['|Δf|(Hz)', 'absDeltaHz'], ['|ΔdB|', 'absDeltaDb']]) {
+        rows.push([g.expr, g.part, label, ...attempts.map((a) => {
+          const row = cells.get(a);
+          if (!row) return '';
+          if (!row.result) return '짝 없음';
+          return key === 'absDeltaDb' ? +row.result[key].toFixed(6) : row.result[key];
+        })]);
+      }
+    }
+    downloadCsv(`비교결과_attempt별_${stamp()}.csv`, rows);
   });
   $('dl-stats').addEventListener('click', () => {
     downloadCsv(`비교결과_통계_${stamp()}.csv`, [

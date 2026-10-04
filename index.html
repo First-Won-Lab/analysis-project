@@ -95,6 +95,20 @@
         </div>
 
         <div class="section-head">
+          <h2>비교군별 attempt 차이</h2>
+          <button class="btn" id="dl-matrix">attempt별 CSV 다운로드</button>
+        </div>
+        <div class="group-tabs" id="group-tabs" role="tablist" aria-label="비교군 선택"></div>
+        <p class="muted" id="group-caption"></p>
+        <div class="table-wrap table-scroll">
+          <table class="data clickable" id="attempt-table">
+            <thead><tr><th class="num">attempt</th><th class="num">|Δf| (MHz)</th><th class="num">|ΔdB|</th><th>비고</th></tr></thead>
+            <tbody id="attempt-body"></tbody>
+            <tfoot id="attempt-foot"></tfoot>
+          </table>
+        </div>
+
+        <div class="section-head">
           <h2>쌍별 결과</h2>
           <button class="btn" id="dl-pairs">쌍별 CSV 다운로드</button>
         </div>

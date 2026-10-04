@@ -50,6 +50,11 @@
     t('쌍 구성', eq(r.pairs.map((p) => [p.expr, p.part, p.attempt]), C.pairing.expect_pairs), JSON.stringify(r.pairs));
     t('짝 없음', eq([...r.unpaired].sort(), [...C.pairing.expect_unpaired].sort()), JSON.stringify(r.unpaired));
     t('규칙 불일치', eq(r.unrecognized, C.pairing.expect_unrecognized), JSON.stringify(r.unrecognized));
+    const M = C.attempt_matrix;
+    const m = A.attemptMatrix(M.results, M.unpaired);
+    t('attempt 합집합', eq(m.attempts, M.expect_attempts), JSON.stringify(m.attempts));
+    const mg = m.groups.map((g) => [g.expr, g.part, g.rows.map((r) => [r.attempt, r.result ? 'pair' : 'unpaired'])]);
+    t('비교군 × attempt 표', eq(mg, M.expect_groups), JSON.stringify(mg));
     t('평균', Math.abs(A.mean(C.stats.values) - C.stats.mean) < 1e-12, A.mean(C.stats.values));
     t('표본표준편차', Math.abs(A.stdev(C.stats.values) - C.stats.stdev) < 1e-12, A.stdev(C.stats.values));
     t('표본 1개 SD = null', A.stdev([5]) === null, A.stdev([5]));
