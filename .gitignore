@@ -1,0 +1,17 @@
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# auto_ver4.py 결과 출력
+auto_ver4_results/
+
+# 측정 원본 데이터는 올리지 않는다 (테스트 픽스처는 tests/cases.json 에 인라인)
+*.csv
+
+# OS / 편집기
+.DS_Store
+Thumbs.db
+desktop.ini
+.vscode/

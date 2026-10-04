@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>analysis.js 테스트</title>
+  <style>
+    body { font: 14px/1.6 system-ui, sans-serif; margin: 24px 16px; background: #fcfcfb; color: #0b0b0b; }
+    .pass { color: #008300; } .fail { color: #c62828; font-weight: 700; }
+    pre { white-space: pre-wrap; }
+  </style>
+</head>
+<body>
+  <h1>analysis.js 테스트</h1>
+  <p>로컬 서버로 열어야 합니다 (예: 저장소 루트에서 <code>python -m http.server</code> 후
+    <code>http://localhost:8000/tests/analysis.test.html</code>). 케이스는 <code>tests/cases.json</code>을 Python 테스트와 함께 씁니다.</p>
+  <h2 id="summary">실행 중…</h2>
+  <pre id="log"></pre>
+  <script src="../assets/analysis.js"></script>
+  <script>
+  (async () => {
+    const A = window.Analysis;
+    const C = await (await fetch('cases.json')).json();
+    const log = document.getElementById('log');
+    let pass = 0, fail = 0;
+    const eq = (x, y) => JSON.stringify(x) === JSON.stringify(y);
+    function t(name, ok, detail) {
+      ok ? pass++ : fail++;
+      const line = document.createElement('div');
+      line.className = ok ? 'pass' : 'fail';
+      line.textContent = `${ok ? '✔' : '✘'} ${name}${ok ? '' : '  → ' + detail}`;
+      log.appendChild(line);
+    }
+
+    for (const c of C.file_names) {
+      const got = A.parseFileName(c.name);
+      t(`파일명 ${c.name}`, eq(got, c.expect), JSON.stringify(got));
+    }
+    for (const c of C.pair_checks) {
+      const got = A.checkPair(c.a, c.b);
+      const ok = c.ok ? got.ok && got.neutral === c.neutral : !got.ok && got.errors.length > 0;
+      t(`쌍 확인 ${c.a} + ${c.b}`, ok, JSON.stringify(got));
+    }
+    C.csv_peaks.forEach((c, i) => {
+      const p = A.parseCsv(c.text).peak;
+      const got = p && { hz: p.hz, db: p.db };
+      t(`피크 추출 #${i}`, eq(got, c.expect), JSON.stringify(got));
+    });
+    const r = A.buildPairs(C.pairing.names);
+    t('쌍 구성', eq(r.pairs.map((p) => [p.expr, p.part, p.attempt]), C.pairing.expect_pairs), JSON.stringify(r.pairs));
+    t('짝 없음', eq([...r.unpaired].sort(), [...C.pairing.expect_unpaired].sort()), JSON.stringify(r.unpaired));
+    t('규칙 불일치', eq(r.unrecognized, C.pairing.expect_unrecognized), JSON.stringify(r.unrecognized));
+    t('평균', Math.abs(A.mean(C.stats.values) - C.stats.mean) < 1e-12, A.mean(C.stats.values));
+    t('표본표준편차', Math.abs(A.stdev(C.stats.values) - C.stats.stdev) < 1e-12, A.stdev(C.stats.values));
+    t('표본 1개 SD = null', A.stdev([5]) === null, A.stdev([5]));
+
+    const s = document.getElementById('summary');
+    s.textContent = fail ? `실패 ${fail}개 / 통과 ${pass}개` : `모두 통과 (${pass}개)`;
+    s.className = fail ? 'fail' : 'pass';
+    document.title = fail ? 'FAIL' : 'PASS';
+  })();
+  </script>
+</body>
+</html>
