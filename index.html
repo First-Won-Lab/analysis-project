@@ -7,8 +7,9 @@
   <meta name="description" content="무표정과 원상태 CSV의 공진 피크(Return Loss 최저점)와 주파수 차이를 비교합니다.">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Jua&family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="assets/style.css">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22%3E%3Ctext y=%22.9em%22 font-size=%2290%22%3E%F0%9F%90%BE%3C/text%3E%3C/svg%3E">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/plotly.js/2.35.3/plotly-basic.min.js" defer></script>
   <script src="assets/analysis.js" defer></script>
   <script src="assets/app.js" defer></script>
@@ -16,13 +17,75 @@
 <body>
   <header class="site-header">
     <div class="wrap">
-      <h1>표정 공진주파수 비교</h1>
-      <p class="lede">같은 표정·부위·attempt의 <strong>무표정</strong>과 <strong>원상태</strong> 측정 CSV에서
-        공진 피크(Return Loss 최저점)와 그 주파수를 뽑아 차이를 비교합니다.
-        파일은 이 브라우저 안에서만 처리되고 어디에도 업로드되지 않습니다.</p>
+      <div class="banner">
+        <svg class="paw p1" viewBox="0 0 64 64" aria-hidden="true"><use href="#paw"/></svg>
+        <svg class="paw p2" viewBox="0 0 64 64" aria-hidden="true"><use href="#paw"/></svg>
+        <svg class="paw p3" viewBox="0 0 64 64" aria-hidden="true"><use href="#paw"/></svg>
+        <div class="banner-text">
+          <span class="badge">📡 Return Loss 공진 피크 분석</span>
+          <h1>표정 <span class="hl">공진주파수</span> 비교</h1>
+          <p class="lede">같은 표정·부위·attempt의 <strong>무표정</strong>과 <strong>원상태</strong> 측정 CSV에서
+            공진 피크(Return Loss 최저점)와 그 주파수를 뽑아 차이를 비교합니다.
+            파일은 이 브라우저 안에서만 처리되고 어디에도 업로드되지 않습니다.</p>
+        </div>
+        <svg class="pets" viewBox="0 0 320 210" role="img" aria-label="웃고 있는 강아지와 고양이 일러스트">
+          <defs>
+            <symbol id="paw" viewBox="0 0 64 64">
+              <ellipse cx="32" cy="42" rx="14" ry="12"/>
+              <ellipse cx="14" cy="26" rx="6" ry="8"/><ellipse cx="26" cy="15" rx="6" ry="8"/>
+              <ellipse cx="38" cy="15" rx="6" ry="8"/><ellipse cx="50" cy="26" rx="6" ry="8"/>
+            </symbol>
+          </defs>
+          <!-- 공진 곡선 장식 -->
+          <path d="M8 60 C40 60 52 58 66 40 C74 30 80 30 88 44 C100 64 120 60 160 60 C200 60 214 58 228 36 C236 24 244 24 252 40 C264 62 284 60 312 60"
+                fill="none" stroke="#ffffff" stroke-width="4" stroke-linecap="round" opacity=".7"/>
+          <g fill="#ff8fab" opacity=".9">
+            <path d="M160 26c-4-6-13-3-11 4 1 4 11 11 11 11s10-7 11-11c2-7-7-10-11-4z"/>
+          </g>
+          <!-- 강아지 -->
+          <g class="bob-a">
+            <ellipse cx="96" cy="176" rx="48" ry="32" fill="#f3d2a6"/>
+            <ellipse cx="96" cy="182" rx="26" ry="18" fill="#fbead2"/>
+            <ellipse cx="52" cy="98" rx="17" ry="33" fill="#c58c5c" transform="rotate(22 52 98)"/>
+            <ellipse cx="140" cy="98" rx="17" ry="33" fill="#c58c5c" transform="rotate(-22 140 98)"/>
+            <circle cx="96" cy="106" r="50" fill="#f7dcb4"/>
+            <ellipse cx="114" cy="98" rx="16" ry="14" fill="#ebc392"/>
+            <ellipse cx="96" cy="126" rx="24" ry="17" fill="#fbead2"/>
+            <circle cx="78" cy="101" r="6.5" fill="#3b2f2f"/><circle cx="76" cy="99" r="2.2" fill="#fff"/>
+            <circle cx="114" cy="101" r="6.5" fill="#3b2f2f"/><circle cx="112" cy="99" r="2.2" fill="#fff"/>
+            <ellipse cx="96" cy="118" rx="8.5" ry="6" fill="#3b2f2f"/>
+            <path d="M89 135 q7 14 14 0 z" fill="#ff8fa3"/>
+            <path d="M96 124 v5 M96 129 q-7 8 -14 2 M96 129 q7 8 14 2" fill="none" stroke="#3b2f2f" stroke-width="3" stroke-linecap="round"/>
+            <ellipse cx="66" cy="122" rx="9" ry="5.5" fill="#ffadc0" opacity=".75"/>
+            <ellipse cx="126" cy="122" rx="9" ry="5.5" fill="#ffadc0" opacity=".75"/>
+            <ellipse cx="76" cy="203" rx="14" ry="8" fill="#f7dcb4"/>
+            <ellipse cx="116" cy="203" rx="14" ry="8" fill="#f7dcb4"/>
+          </g>
+          <!-- 고양이 -->
+          <g class="bob-b">
+            <path d="M262 186 C292 180 300 150 286 128" fill="none" stroke="#d9d2e9" stroke-width="13" stroke-linecap="round"/>
+            <ellipse cx="226" cy="178" rx="44" ry="30" fill="#e7e1f2"/>
+            <ellipse cx="226" cy="184" rx="24" ry="16" fill="#f8f5fc"/>
+            <path d="M184 92 L190 46 L220 72 Z" fill="#e7e1f2"/>
+            <path d="M268 92 L262 46 L232 72 Z" fill="#e7e1f2"/>
+            <path d="M190 80 L193 56 L210 72 Z" fill="#ffc2d1"/>
+            <path d="M262 80 L259 56 L242 72 Z" fill="#ffc2d1"/>
+            <ellipse cx="226" cy="110" rx="50" ry="43" fill="#f1edf8"/>
+            <path d="M216 72 v10 M226 70 v12 M236 72 v10" stroke="#cfc6e2" stroke-width="3.5" stroke-linecap="round"/>
+            <path d="M200 108 q8 -10 16 0 M236 108 q8 -10 16 0" fill="none" stroke="#3b2f2f" stroke-width="3.5" stroke-linecap="round"/>
+            <path d="M221 119 h10 l-5 6 z" fill="#ff8fa3"/>
+            <path d="M226 125 q-5 7 -10 2 M226 125 q5 7 10 2" fill="none" stroke="#3b2f2f" stroke-width="2.6" stroke-linecap="round"/>
+            <path d="M190 118 l-22 -4 M190 125 l-22 2 M262 118 l22 -4 M262 125 l22 2" stroke="#b9afcc" stroke-width="2" stroke-linecap="round"/>
+            <ellipse cx="198" cy="124" rx="9" ry="5.5" fill="#ffadc0" opacity=".75"/>
+            <ellipse cx="254" cy="124" rx="9" ry="5.5" fill="#ffadc0" opacity=".75"/>
+            <ellipse cx="208" cy="204" rx="13" ry="7.5" fill="#f1edf8"/>
+            <ellipse cx="244" cy="204" rx="13" ry="7.5" fill="#f1edf8"/>
+          </g>
+        </svg>
+      </div>
       <nav class="tabs" role="tablist">
-        <button class="tab" role="tab" id="tab-pair" aria-controls="panel-pair" aria-selected="true">2개 파일 비교</button>
-        <button class="tab" role="tab" id="tab-batch" aria-controls="panel-batch" aria-selected="false">일괄 비교</button>
+        <button class="tab" role="tab" id="tab-pair" aria-controls="panel-pair" aria-selected="true">📄 2개 파일 비교</button>
+        <button class="tab" role="tab" id="tab-batch" aria-controls="panel-batch" aria-selected="false">🗂️ 일괄 비교</button>
       </nav>
     </div>
   </header>
@@ -137,7 +200,7 @@
   </main>
 
   <footer class="wrap site-footer">
-    피크 = Return Loss(B열) 최저값과 그 행의 주파수(A열) · 차이는 절대값 · SD는 표본표준편차(n−1)
+    🐶 🐱 피크 = Return Loss(B열) 최저값과 그 행의 주파수(A열) · 차이는 절대값 · SD는 표본표준편차(n−1)
   </footer>
 </body>
 </html>

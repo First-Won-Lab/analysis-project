@@ -106,6 +106,9 @@
     });
     const layout = baseLayout();
     layout.xaxis.title = { text: '주파수 (MHz)' };
+    // 피크 라벨 때문에 축이 데이터 밖으로 늘어나지 않게 범위 고정
+    const fs = neutral.freq.concat(expressive.freq).map((f) => f / 1e6);
+    layout.xaxis.range = [Math.min(...fs), Math.max(...fs)];
     layout.yaxis.title = { text: 'Return Loss (dB)' };
     layout.hovermode = 'x unified';
     layout.shapes = [neutral, expressive].map((d, i) => ({
@@ -113,13 +116,18 @@
       line: { color: i ? cE : cN, width: 1, dash: 'dot' },
     }));
     // 좁은 화면에서는 라벨이 그래프 밖으로 넘치므로 생략 (마커·hover·표로 확인)
-    layout.annotations = el.clientWidth < 600 ? [] : [neutral, expressive].map((d, i) => ({
-      x: d.peak.hz / 1e6, y: d.peak.db, xref: 'x', yref: 'y',
-      text: `${i ? '원상태' : '무표정'} ${fmtMHz(d.peak.hz)} MHz, ${d.peak.db.toFixed(2)} dB`,
-      showarrow: true, arrowhead: 0, arrowcolor: cssVar('--text-muted'), ax: i ? 70 : -70, ay: i ? 36 : -36,
-      xanchor: i ? 'left' : 'right',
-      font: { color: cssVar('--text-primary'), size: 12 }, bgcolor: surface, borderpad: 3,
-    }));
+    // 피크가 그래프 왼쪽 절반이면 라벨을 오른쪽에, 오른쪽 절반이면 왼쪽에 둔다 (잘림 방지)
+    const [x0, x1] = layout.xaxis.range;
+    layout.annotations = el.clientWidth < 600 ? [] : [neutral, expressive].map((d, i) => {
+      const toRight = (d.peak.hz / 1e6 - x0) / (x1 - x0) < 0.5;
+      return {
+        x: d.peak.hz / 1e6, y: d.peak.db, xref: 'x', yref: 'y',
+        text: `${i ? '원상태' : '무표정'} ${fmtMHz(d.peak.hz)} MHz, ${d.peak.db.toFixed(2)} dB`,
+        showarrow: true, arrowhead: 0, arrowcolor: cssVar('--text-muted'),
+        ax: toRight ? 60 : -60, ay: i ? 36 : -36, xanchor: toRight ? 'left' : 'right',
+        font: { color: cssVar('--text-primary'), size: 12 }, bgcolor: surface, borderpad: 3,
+      };
+    });
     Plotly.react(el, [line(neutral, '무표정', cN), line(expressive, '원상태', cE), peak(neutral, '무표정', cN), peak(expressive, '원상태', cE)], layout, plotConfig);
   }
 
@@ -133,7 +141,7 @@
     layout.bargap = 0.45;
     Plotly.react(el, [{
       type: 'bar', x: labels, y: stats.map((s) => s[key] / scale),
-      marker: { color: cssVar('--accent'), cornerradius: 4 },
+      marker: { color: cssVar('--chart-bar'), cornerradius: 4 },
       error_y: { type: 'data', array: stats.map((s) => (s[sdKey] === null ? 0 : s[sdKey] / scale)), color: cssVar('--text-muted'), thickness: 1.5, width: 4 },
       customdata: stats.map((s) => [s.count, s[sdKey] === null ? '—' : (s[sdKey] / scale).toFixed(3)]),
       hovertemplate: `%{x}<br>평균 %{y:.3f} ${unit}<br>SD %{customdata[1]} · n=%{customdata[0]}<extra></extra>`,

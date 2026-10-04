@@ -47,7 +47,11 @@
 | `tests/analysis.test.html` | JS 테스트 (브라우저) | 제목이 `PASS` / `FAIL`로 바뀜 |
 | `docs/images/` | README 스크린샷 | UI가 바뀌면 다시 찍기 |
 
-색 규칙: 무표정 = 파랑(`--series-neutral`), 원상태 = 주황(`--series-expressive`). 두 색의 역할을 바꾸지 않는다.
+색 규칙:
+- 그래프 색은 검증된 팔레트 그대로 둔다: 무표정 = 파랑(`--series-neutral`), 원상태 = 주황(`--series-expressive`), 통계 막대 = `--chart-bar`. 두 계열색의 역할을 바꾸지 않는다.
+- 나머지 화면(배경, 카드, 탭, 버튼)은 파스텔 톤 토큰(`--accent`, `--accent-soft`, `--peach-soft`, `--mint-soft`, `--banner-*` 등)을 쓴다. 라이트/다크 값은 `style.css` 맨 위에서 함께 고친다.
+- 글꼴: 제목·숫자 강조는 Google Fonts `Jua`, 본문·표는 `Noto Sans KR`.
+- 상단 배너의 강아지·고양이는 `index.html` 안의 인라인 SVG 일러스트(직접 그림, 외부 이미지 없음)다. 움직임은 `prefers-reduced-motion`이면 꺼진다.
 
 ## 4. 작업 절차
 
