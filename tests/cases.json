@@ -245,5 +245,129 @@
         ]
       ]
     ]
+  },
+  "v2_find_dips": {
+    "_comment": "돌출도 = min(왼쪽 최고점, 오른쪽 최고점) - 최저점 (각 방향: 더 낮은 점이나 끝을 만날 때까지)",
+    "db": [
+      0,
+      -1,
+      -5,
+      -2,
+      -3,
+      -8,
+      -1,
+      0
+    ],
+    "cases": [
+      {
+        "min_prominence": 0,
+        "expect": [
+          [
+            2,
+            3
+          ],
+          [
+            5,
+            8
+          ]
+        ]
+      },
+      {
+        "min_prominence": 3.5,
+        "expect": [
+          [
+            5,
+            8
+          ]
+        ]
+      }
+    ]
+  },
+  "v2_parabolic": {
+    "freq": [
+      0,
+      1,
+      2
+    ],
+    "db": [
+      -1,
+      -3,
+      -2
+    ],
+    "index": 1,
+    "expect": {
+      "hz": 1.1666666666666667,
+      "db": -3.0416666666666665
+    }
+  },
+  "v2_synthetic": {
+    "_comment": "freq = start + i*step (i=0..n-1), db = base - Σ depth·exp(-((f-center)/width)^2). 알려진 이동·깊이를 되찾는지 확인",
+    "start": 1000000.0,
+    "step": 3000000.0,
+    "n": 1000,
+    "base": -3,
+    "neutral": [
+      {
+        "center": 150000000.0,
+        "depth": 12,
+        "width": 30000000.0
+      },
+      {
+        "center": 650000000.0,
+        "depth": 20,
+        "width": 25000000.0
+      },
+      {
+        "center": 1500000000.0,
+        "depth": 15,
+        "width": 60000000.0
+      }
+    ],
+    "expressive": [
+      {
+        "center": 165000000.0,
+        "depth": 12,
+        "width": 30000000.0
+      },
+      {
+        "center": 640000000.0,
+        "depth": 26,
+        "width": 25000000.0
+      },
+      {
+        "center": 1530000000.0,
+        "depth": 15,
+        "width": 60000000.0
+      }
+    ],
+    "expect": [
+      {
+        "band": "R1",
+        "status": "ok",
+        "shift_min": 15000000.0,
+        "shift_shape": 15000000.0,
+        "depth_diff": 0
+      },
+      {
+        "band": "R2",
+        "status": "ok",
+        "shift_min": -10000000.0,
+        "shift_shape": -10000000.0,
+        "depth_diff": -6
+      },
+      {
+        "band": "R3",
+        "status": "ok",
+        "shift_min": 30000000.0,
+        "shift_shape": 30000000.0,
+        "depth_diff": 0
+      },
+      {
+        "band": "R4",
+        "status": "missing"
+      }
+    ],
+    "tol_hz": 1000000.0,
+    "tol_db": 0.3
   }
 }

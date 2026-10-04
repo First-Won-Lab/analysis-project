@@ -55,6 +55,36 @@
     t('attempt 합집합', eq(m.attempts, M.expect_attempts), JSON.stringify(m.attempts));
     const mg = m.groups.map((g) => [g.expr, g.part, g.rows.map((r) => [r.attempt, r.result ? 'pair' : 'unpaired'])]);
     t('비교군 × attempt 표', eq(mg, M.expect_groups), JSON.stringify(mg));
+    // ----- 분석 정의 v2 -----
+    const FD = C.v2_find_dips;
+    for (const c of FD.cases) {
+      const got = A.findDips({ db: FD.db }, c.min_prominence).map((d) => [d.index, d.prominence]);
+      t(`dip 검출 (최소 돌출도 ${c.min_prominence})`, eq(got, c.expect), JSON.stringify(got));
+    }
+    const PB = C.v2_parabolic;
+    const pm = A.parabolicMin({ freq: PB.freq, db: PB.db }, PB.index);
+    t('포물선 보간', Math.abs(pm.hz - PB.expect.hz) < 1e-9 && Math.abs(pm.db - PB.expect.db) < 1e-9, JSON.stringify(pm));
+    const SY = C.v2_synthetic;
+    const synth = (dips) => {
+      const freq = [];
+      const db = [];
+      for (let i = 0; i < SY.n; i++) {
+        const f = SY.start + i * SY.step;
+        freq.push(f);
+        db.push(SY.base - dips.reduce((acc, d) => acc + d.depth * Math.exp(-(((f - d.center) / d.width) ** 2)), 0));
+      }
+      return { freq, db };
+    };
+    const rows = A.compareBands(synth(SY.neutral), synth(SY.expressive), {});
+    SY.expect.forEach((exp, i) => {
+      const r = rows[i];
+      let ok = r.band === exp.band && r.status === exp.status;
+      if (ok && exp.status !== 'missing') {
+        ok = Math.abs(r.shiftMin - exp.shift_min) <= SY.tol_hz && Math.abs(r.shiftShape - exp.shift_shape) <= SY.tol_hz &&
+          Math.abs(r.depthDiff - exp.depth_diff) <= SY.tol_db && !r.shapeChanged;
+      }
+      t(`합성 곡선 ${exp.band}`, ok, JSON.stringify({ status: r.status, shiftMin: r.shiftMin, shiftShape: r.shiftShape, depthDiff: r.depthDiff }));
+    });
     t('평균', Math.abs(A.mean(C.stats.values) - C.stats.mean) < 1e-12, A.mean(C.stats.values));
     t('표본표준편차', Math.abs(A.stdev(C.stats.values) - C.stats.stdev) < 1e-12, A.stdev(C.stats.values));
     t('표본 1개 SD = null', A.stdev([5]) === null, A.stdev([5]));

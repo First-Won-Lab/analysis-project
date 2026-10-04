@@ -1,5 +1,6 @@
 """python/auto_ver4.py 단위 테스트.  실행: python -m unittest discover tests"""
 import json
+import math
 import os
 import sys
 import tempfile
@@ -73,12 +74,38 @@ class AttemptMatrixTest(unittest.TestCase):
                for g in groups]
         self.assertEqual(got, c['expect_groups'])
 
-    def test_rows(self):
-        results = [{'expr': '놀', 'part': '눈', 'attempt': 1, 'abs_delta_hz': 3e6, 'abs_delta_db': 1.5}]
-        rows = a.attempt_matrix_rows(*a.attempt_matrix(results, ['x_놀 눈 2 무.csv']))
-        self.assertEqual(rows, [['표정', '부위', '항목', '1', '2'],
-                                ['놀', '눈', '|Δf|(Hz)', 3e6, '짝 없음'],
-                                ['놀', '눈', '|ΔdB|', 1.5, '짝 없음']])
+def synth(spec, dips):
+    freq = [spec['start'] + i * spec['step'] for i in range(spec['n'])]
+    db = [spec['base'] - sum(d['depth'] * math.exp(-((f - d['center']) / d['width']) ** 2) for d in dips) for f in freq]
+    return {'freq': freq, 'db': db}
+
+
+class V2Test(unittest.TestCase):
+    def test_find_dips(self):
+        c = CASES['v2_find_dips']
+        for case in c['cases']:
+            got = [[d['index'], d['prominence']] for d in a.find_dips({'db': c['db']}, case['min_prominence'])]
+            self.assertEqual(got, case['expect'])
+
+    def test_parabolic(self):
+        c = CASES['v2_parabolic']
+        hz, db = a.parabolic_min({'freq': c['freq'], 'db': c['db']}, c['index'])
+        self.assertAlmostEqual(hz, c['expect']['hz'])
+        self.assertAlmostEqual(db, c['expect']['db'])
+
+    def test_synthetic_shift(self):
+        c = CASES['v2_synthetic']
+        rows = a.compare_bands(synth(c, c['neutral']), synth(c, c['expressive']), a.DEFAULT_SETTINGS)
+        for row, exp in zip(rows, c['expect']):
+            with self.subTest(band=exp['band']):
+                self.assertEqual(row['band'], exp['band'])
+                self.assertEqual(row['status'], exp['status'])
+                if exp['status'] == 'missing':
+                    continue
+                self.assertAlmostEqual(row['shift_min'], exp['shift_min'], delta=c['tol_hz'])
+                self.assertAlmostEqual(row['shift_shape'], exp['shift_shape'], delta=c['tol_hz'])
+                self.assertAlmostEqual(row['depth_diff'], exp['depth_diff'], delta=c['tol_db'])
+                self.assertFalse(row['shape_changed'])
 
 
 class StatsTest(unittest.TestCase):

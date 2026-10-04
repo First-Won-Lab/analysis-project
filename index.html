@@ -91,6 +91,34 @@
   </header>
 
   <main class="wrap">
+    <!-- ============ 분석 설정 (두 탭 공통) ============ -->
+    <details class="card settings" id="settings">
+      <summary><span class="settings-title">⚙ 분석 설정 · 피크 정의</span> <span class="muted" id="settings-summary"></span></summary>
+      <div class="settings-body">
+        <div class="settings-grid">
+          <label>R1 | R2 경계 <span class="unit-input"><input type="number" id="set-b1" step="any" min="0"> MHz</span></label>
+          <label>R2 | R3 경계 <span class="unit-input"><input type="number" id="set-b2" step="any" min="0"> MHz</span></label>
+          <label>R3 | R4 경계 <span class="unit-input"><input type="number" id="set-b3" step="any" min="0"> MHz</span></label>
+          <label>최소 돌출도 <span class="unit-input"><input type="number" id="set-prom" step="any" min="0"> dB</span></label>
+        </div>
+        <div class="settings-actions">
+          <button class="btn btn-primary" id="set-apply">적용</button>
+          <button class="btn" id="set-reset">기본값</button>
+          <span class="settings-error" id="set-error" role="alert"></span>
+        </div>
+        <ul class="definition">
+          <li><b>dip</b>: 주변보다 <i>최소 돌출도</i> 이상 들어간 국소 최저점</li>
+          <li><b>대역 피크</b>: 각 대역(R1~R4)에서 돌출도가 가장 큰 dip · 위치와 깊이는 주변 3점 포물선 보간</li>
+          <li><b>Δf 최저점</b> = f원 − f무 (<b>+</b> 오른쪽·고주파 / <b>−</b> 왼쪽·저주파)</li>
+          <li><b>Δf 모양정렬</b>: 무표정 dip 주변 곡선(반폭 = max(30 MHz, 반치폭×1.5))을 원상태 곡선 위에서 밀어 정규화 상관계수가 최대인 이동량</li>
+          <li><b>깊이 차</b> = dB원 − dB무 (<b>−</b>면 더 깊어짐) · <b>돌출도 차</b> = 돌출도원 − 돌출도무 (<b>+</b>면 더 뚜렷해짐)</li>
+          <li><b>⚠ 이동량 불일치</b>: |Δf 최저점 − Δf 모양정렬| &gt; max(10 MHz, |Δf|×15%) → '불일치 제외' 통계에서 뺌</li>
+          <li><b>◐ 모양 변화</b>: 상관계수 &lt; 0.9 (dip 모양이 달라짐, 정보용)</li>
+          <li><b>피크 없음</b>: 한쪽이라도 그 대역에 dip이 없으면 그 대역만 제외</li>
+        </ul>
+      </div>
+    </details>
+
     <!-- ============ 2개 파일 비교 ============ -->
     <section id="panel-pair" role="tabpanel" aria-labelledby="tab-pair">
       <label class="dropzone" id="pair-drop">
@@ -103,20 +131,23 @@
 
       <div id="pair-result" hidden>
         <h2 id="pair-title" class="result-title"></h2>
-        <div class="kpis">
-          <div class="kpi"><span class="kpi-label">주파수 차이 |Δf|</span><span class="kpi-value" id="kpi-hz"></span><span class="kpi-sub" id="kpi-hz-sub"></span></div>
-          <div class="kpi"><span class="kpi-label">피크 차이 |ΔdB|</span><span class="kpi-value" id="kpi-db"></span><span class="kpi-sub">Return Loss 최저값 차이</span></div>
-        </div>
+        <div class="band-cards" id="pair-cards"></div>
         <div class="table-wrap">
           <table class="data">
-            <thead><tr><th>구분</th><th>파일</th><th class="num">피크 주파수 (MHz)</th><th class="num">피크 (dB)</th></tr></thead>
+            <thead><tr><th>대역</th><th>상태</th><th class="num">무 f (MHz)</th><th class="num">원 f (MHz)</th>
+              <th class="num">Δf 최저점 (MHz)</th><th class="num">Δf 모양정렬 (MHz)</th><th class="num">상관</th>
+              <th class="num">무 dB</th><th class="num">원 dB</th><th class="num">깊이 차 (dB)</th><th class="num">돌출도 차 (dB)</th></tr></thead>
             <tbody id="pair-table"></tbody>
           </table>
         </div>
         <div class="card">
-          <h3>Return Loss 곡선</h3>
-          <div id="pair-chart" class="chart" role="img" aria-label="무표정과 원상태 Return Loss 곡선 비교 그래프"></div>
+          <h3>Return Loss 곡선 <span class="muted">· 색 띠 = 대역, 화살표 = 무표정 → 원상태 피크 이동</span></h3>
+          <div id="pair-chart" class="chart" role="img" aria-label="무표정과 원상태 Return Loss 곡선과 대역별 피크 이동 그래프"></div>
         </div>
+        <details class="card legacy">
+          <summary>📎 이전 방식 (전체 최저점) 결과</summary>
+          <p id="pair-legacy"></p>
+        </details>
       </div>
     </section>
 
@@ -142,65 +173,84 @@
           <ul id="batch-excluded-list"></ul>
         </details>
 
-        <div class="section-head">
-          <h2>표정·부위별 통계</h2>
-          <button class="btn" id="dl-stats">통계 CSV 다운로드</button>
+        <div class="band-bar">
+          <div class="band-tabs" id="band-tabs" role="tablist" aria-label="대역 선택"></div>
+          <div class="dl-group">
+            <button class="btn" id="dl-pairs">쌍별 CSV</button>
+            <button class="btn" id="dl-stats">통계 CSV</button>
+            <button class="btn" id="dl-matrix">attempt별 CSV</button>
+          </div>
         </div>
+        <p class="muted band-caption" id="band-caption"></p>
+
+        <div class="section-head"><h2 id="stats-title">표정·부위별 통계</h2></div>
         <div class="grid-2">
-          <div class="card"><h3>평균 |Δf| (MHz) <span class="muted">± 표준편차</span></h3><div id="chart-hz" class="chart chart-sm" role="img" aria-label="표정·부위별 평균 주파수 차이"></div></div>
-          <div class="card"><h3>평균 |ΔdB| <span class="muted">± 표준편차</span></h3><div id="chart-db" class="chart chart-sm" role="img" aria-label="표정·부위별 평균 피크 차이"></div></div>
+          <div class="card"><h3>평균 Δf 최저점 (MHz) <span class="muted">± SD · +오른쪽 / −왼쪽</span></h3><div id="chart-shift" class="chart chart-sm" role="img" aria-label="표정·부위별 평균 주파수 이동"></div></div>
+          <div class="card"><h3>평균 깊이 차 (dB) <span class="muted">± SD · −면 더 깊어짐</span></h3><div id="chart-depth" class="chart chart-sm" role="img" aria-label="표정·부위별 평균 깊이 차"></div></div>
         </div>
         <div class="table-wrap">
           <table class="data">
-            <thead><tr><th>표정</th><th>부위</th><th class="num">쌍 수</th><th class="num">|Δf| 평균 (MHz)</th><th class="num">|Δf| SD (MHz)</th><th class="num">|ΔdB| 평균</th><th class="num">|ΔdB| SD</th></tr></thead>
+            <thead><tr><th>표정</th><th>부위</th><th class="num">쌍</th><th class="num">피크 없음</th><th class="num">⚠ 불일치</th><th class="num">◐ 모양</th>
+              <th class="num">Δf 최저점 (MHz)</th><th class="num">|Δf| (MHz)</th><th class="num">Δf 모양정렬 (MHz)</th>
+              <th class="num">깊이 차 (dB)</th><th class="num">돌출도 차 (dB)</th><th class="num">Δf 최저점 · 불일치 제외</th></tr></thead>
             <tbody id="stats-table"></tbody>
           </table>
         </div>
+        <p class="muted table-note">값은 평균 ± 표본표준편차. '피크 없음' 쌍은 제외, '⚠ 불일치' 쌍은 마지막 열에서만 제외.</p>
 
-        <div class="section-head">
-          <h2>비교군별 attempt 차이</h2>
-          <button class="btn" id="dl-matrix">attempt별 CSV 다운로드</button>
-        </div>
+        <div class="section-head"><h2 id="attempt-title">비교군별 attempt 차이</h2></div>
         <div class="group-tabs" id="group-tabs" role="tablist" aria-label="비교군 선택"></div>
         <p class="muted" id="group-caption"></p>
         <div class="table-wrap table-scroll">
           <table class="data clickable" id="attempt-table">
-            <thead><tr><th class="num">attempt</th><th class="num">|Δf| (MHz)</th><th class="num">|ΔdB|</th><th>비고</th></tr></thead>
+            <thead><tr><th class="num">attempt</th><th>상태</th><th class="num">Δf 최저점 (MHz)</th><th class="num">Δf 모양정렬 (MHz)</th><th class="num">상관</th>
+              <th class="num">깊이 차 (dB)</th><th class="num">돌출도 차 (dB)</th></tr></thead>
             <tbody id="attempt-body"></tbody>
             <tfoot id="attempt-foot"></tfoot>
           </table>
         </div>
 
-        <div class="section-head">
-          <h2>쌍별 결과</h2>
-          <button class="btn" id="dl-pairs">쌍별 CSV 다운로드</button>
-        </div>
+        <div class="section-head"><h2 id="pairs-title">쌍별 결과</h2></div>
         <div class="filters">
           <label>표정 <select id="f-expr"><option value="">전체</option></select></label>
           <label>부위 <select id="f-part"><option value="">전체</option></select></label>
-          <span class="muted">행을 누르면 아래에 두 곡선을 겹쳐 보여 줍니다.</span>
+          <label>상태 <select id="f-status"><option value="">전체</option><option value="ok">정상</option><option value="mismatch">⚠ 불일치</option><option value="shape">◐ 모양 변화</option><option value="missing">피크 없음</option></select></label>
+          <span class="muted">머리글을 누르면 정렬, 행을 누르면 아래에 곡선을 보여 줍니다.</span>
         </div>
         <div class="table-wrap table-scroll">
           <table class="data clickable">
             <thead><tr>
-              <th data-sort="expr">표정</th><th data-sort="part">부위</th><th data-sort="attempt" class="num">attempt</th>
-              <th data-sort="nHz" class="num">무 f (MHz)</th><th data-sort="nDb" class="num">무 dB</th>
-              <th data-sort="eHz" class="num">원 f (MHz)</th><th data-sort="eDb" class="num">원 dB</th>
-              <th data-sort="absDeltaHz" class="num">|Δf| (MHz)</th><th data-sort="absDeltaDb" class="num">|ΔdB|</th>
+              <th data-sort="expr">표정</th><th data-sort="part">부위</th><th data-sort="attempt" class="num">attempt</th><th data-sort="status">상태</th>
+              <th data-sort="nHz" class="num">무 f (MHz)</th><th data-sort="eHz" class="num">원 f (MHz)</th>
+              <th data-sort="shiftMin" class="num">Δf 최저점</th><th data-sort="shiftShape" class="num">Δf 모양정렬</th><th data-sort="ncc" class="num">상관</th>
+              <th data-sort="depthDiff" class="num">깊이 차</th><th data-sort="promDiff" class="num">돌출도 차</th>
             </tr></thead>
             <tbody id="pairs-table"></tbody>
           </table>
         </div>
         <div class="card" id="batch-detail" hidden>
           <h3 id="batch-detail-title"></h3>
-          <div id="batch-chart" class="chart" role="img" aria-label="선택한 쌍의 Return Loss 곡선 비교 그래프"></div>
+          <div id="batch-chart" class="chart" role="img" aria-label="선택한 쌍의 Return Loss 곡선과 대역별 피크 이동 그래프"></div>
         </div>
+
+        <details class="card legacy" id="legacy">
+          <summary>📎 이전 방식 (전체 최저점, 절대값) 결과 보기</summary>
+          <div class="legacy-body">
+            <div class="dl-group"><button class="btn" id="dl-legacy-pairs">이전 방식 쌍별 CSV</button><button class="btn" id="dl-legacy-stats">이전 방식 통계 CSV</button></div>
+            <div class="table-wrap">
+              <table class="data">
+                <thead><tr><th>표정</th><th>부위</th><th class="num">쌍 수</th><th class="num">|Δf| 평균 (MHz)</th><th class="num">|Δf| SD (MHz)</th><th class="num">|ΔdB| 평균</th><th class="num">|ΔdB| SD</th></tr></thead>
+                <tbody id="legacy-table"></tbody>
+              </table>
+            </div>
+          </div>
+        </details>
       </div>
     </section>
   </main>
 
   <footer class="wrap site-footer">
-    🐶 🐱 피크 = Return Loss(B열) 최저값과 그 행의 주파수(A열) · 차이는 절대값 · SD는 표본표준편차(n−1)
+    🐶 🐱 피크 정의와 기준은 ⚙ 분석 설정에서 확인 · 차이는 원상태 − 무표정 · SD는 표본표준편차(n−1)
   </footer>
 </body>
 </html>
